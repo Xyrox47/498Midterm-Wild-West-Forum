@@ -8,11 +8,15 @@
     {{> header}}
     <main>
         <h1>{{title}}</h1>
-        <form action="/logout" method="POST">
-            <button type="submit">Log Out</button>
+
+        <form action="/login" method="POST">
+            <input name="username" required>
+            <input name="password" type="password" required>
+            <button type="submit">Log In</button>
         </form>
-        
     </main>
+    <p>{{error}}</p>
+
 
     {{> footer}}
 </body>

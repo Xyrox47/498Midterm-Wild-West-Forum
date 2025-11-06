@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    {{> header}}
+    
+    <title>{{title}}</title>
+
+    <main>
+        <h1>{{title}}</h1>
+        <p>{{message}}</p>
+        <a href="/comment/new">New Comment</a>
+
+    </main>
+    <div class="comments-container">
+        {{#if comments.length}}
+            {{#each comments}}
+            <div class="comment">
+                <div class="comment-author">
+                    <strong>{{this.author}}</strong>
+                    <span class="comment-date">{{this.createdAt}}</span>
+                </div>
+                <div class="comment-text">
+                    {{this.text}}
+                </div>
+            </div>
+            {{/each}}
+        {{else}}
+            <p>No comments posted</p>
+        {{/if}}
+    </div>
+
+    {{> footer}}
+</body>
+</html>
+

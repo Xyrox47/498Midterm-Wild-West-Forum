@@ -6,12 +6,13 @@
 </head>
 <body>
     {{> header}}
+    
     <main>
         <h1>{{title}}</h1>
-        <form action="/logout" method="POST">
-            <button type="submit">Log Out</button>
+        <form action="/comment" method="POST">
+            <input name="text" required>
+            <button type="submit">Comment</button>
         </form>
-        
     </main>
 
     {{> footer}}

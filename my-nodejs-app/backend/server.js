@@ -73,9 +73,13 @@ app.get('/comments', (req, res) => {
     res.render('comments', {
         title: 'Comments',
         currentPage: 'comments',
+        comments: comments,
     });});
 
 app.get('/comment/new', (req, res) => {
+    if (!req.session.isLoggedIn) {
+        return res.redirect('/login'); 
+    }
     res.render('new', {
         title: 'New',
         currentPage: 'new',
@@ -126,11 +130,11 @@ app.post('/logout', (req, res) => {
 });
 
 app.post('/comment', (req, res) => {
-    if (!req.session.user) {
+    if (!req.session.isLoggedIn) {
         return res.redirect('/login'); 
     }
     comments.push( { 
-        author: req.session.user, 
+        author: req.session.username, 
         text: req.body.text, 
         createdAt: new Date() 
     }); 
