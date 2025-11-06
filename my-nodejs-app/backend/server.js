@@ -1,8 +1,10 @@
 const express = require('express');
 const app = express();
-const PORT = process.env.PORT || 3000;  //you don't need to use your special IP anymore!
+const PORT = process.env.PORT || 3000;  
 const hbs = require('hbs');
 const path = require('path');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
 
 // import { fileURLToPath } from "url";
 // const __filename = fileURLToPath(import.meta.url);
@@ -12,12 +14,27 @@ const path = require('path');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
+app.use(cookieParser());
 
 // Handlebars
 app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
 hbs.registerPartials(path.join(__dirname, "views/partials"));
 
+// Session middleware configuration
+app.use(session({
+    secret: 'your-secret-key-change-this-in-production',
+    resave: false,
+    saveUninitialized: false,
+    name: 'session',
+    cookie: {
+        secure: false, // Set to true if using HTTPS
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
+
+let users = [];
+let comments = [];
 
 // Serve static files from the public directory
 // app.use(express.static('public'));
@@ -27,29 +44,106 @@ hbs.registerPartials(path.join(__dirname, "views/partials"));
 // nginx receives: http://localhost/api/users
 // nginx forwards to: http://backend-nodejs:3000/users (without /api)
 app.get('/', (req, res) => {
-    res.json({ 
-        message: 'Hello from the API!',
-        timestamp: new Date().toISOString()
-    });
-});
-
-app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'healthy',
-        service: 'nodejs-backend'
-    });
-});
-
-// In your route
-app.get('/home', (req, res) => {
     res.render('home', {
         title: 'Wild West Forum',
         currentPage: 'home',
     });
+    // res.json({ 
+    //     message: 'Hello from the API!',
+    //     timestamp: new Date().toISOString()
+    // });
+});
+
+// Get Routes
+
+app.get('/register', (req, res) => {
+    res.render('register', {
+        title: 'Register',
+        currentPage: 'register',
+    });
+});
+
+app.get('/login', (req, res) => {
+    res.render('login', {
+        title: 'Login',
+        currentPage: 'login',
+    });});
+
+app.get('/comments', (req, res) => {
+    res.render('comments', {
+        title: 'Comments',
+        currentPage: 'comments',
+    });});
+
+app.get('/comment/new', (req, res) => {
+    res.render('new', {
+        title: 'New',
+        currentPage: 'new',
+    });});
+
+// Post Routes
+
+app.post('/register', (req, res) => {
+    const { username, password } = req.body;
+    
+    // if the entered username equals an already used username, render error
+    if (users.find(u => u.username === username)) {
+        return res.render('register', {
+            error: 'User already exists!'
+            }
+        );
+    }
+    // Else, add username and password into the users arrary
+    users.push({ username, password });
+
+    // Send to log in page
+    res.redirect('/login');
+
+});
+
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+
+    if (users.find(u => u.username === username && u.password === password)) {
+        req.session.isLoggedIn = true;
+        req.session.username = username;
+        return res.redirect('/');
+    }
+    return res.render('login', {
+        error: 'Wrong username or password!'
+        }
+    );
+});
+
+app.post('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.log('Error destroying session:', err);
+        }
+        res.clearCookie('session');
+        res.redirect('/new');
+    });
+});
+
+app.post('/comment', (req, res) => {
+    if (!req.session.user) {
+        return res.redirect('/login'); 
+    }
+    comments.push( { 
+        author: req.session.user, 
+        text: req.body.text, 
+        createdAt: new Date() 
+    }); 
+    res.redirect('/comments'); 
 });
 
 
-
+// app.get('/health', (req, res) => {
+//     res.json({ 
+//         status: 'healthy',
+//         service: 'nodejs-backend'
+//     });
+// });
 
 // Start server
 // Note: We use '0.0.0.0' instead of 'localhost' because Docker containers
