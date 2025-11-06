@@ -47,6 +47,9 @@ app.get('/', (req, res) => {
     res.render('home', {
         title: 'Wild West Forum',
         currentPage: 'home',
+
+        isLoggedIn: req.session.isLoggedIn,
+        username: req.session.username
     });
     // res.json({ 
     //     message: 'Hello from the API!',
@@ -60,6 +63,9 @@ app.get('/register', (req, res) => {
     res.render('register', {
         title: 'Register',
         currentPage: 'register',
+
+        isLoggedIn: req.session.isLoggedIn,
+        username: req.session.username
     });
 });
 
@@ -67,6 +73,9 @@ app.get('/login', (req, res) => {
     res.render('login', {
         title: 'Login',
         currentPage: 'login',
+
+        isLoggedIn: req.session.isLoggedIn,
+        username: req.session.username
     });});
 
 app.get('/comments', (req, res) => {
@@ -74,6 +83,9 @@ app.get('/comments', (req, res) => {
         title: 'Comments',
         currentPage: 'comments',
         comments: comments,
+
+        isLoggedIn: req.session.isLoggedIn,
+        username: req.session.username
     });});
 
 app.get('/comment/new', (req, res) => {
@@ -81,8 +93,11 @@ app.get('/comment/new', (req, res) => {
         return res.redirect('/login'); 
     }
     res.render('new', {
-        title: 'New',
+        title: 'New Comment',
         currentPage: 'new',
+
+        isLoggedIn: req.session.isLoggedIn,
+        username: req.session.username
     });});
 
 // Post Routes
@@ -93,7 +108,12 @@ app.post('/register', (req, res) => {
     // if the entered username equals an already used username, render error
     if (users.find(u => u.username === username)) {
         return res.render('register', {
-            error: 'User already exists!'
+                title: 'Register',
+                currentPage: 'register',                
+                error: 'User already exists!',
+
+                isLoggedIn: req.session.isLoggedIn,
+                username: req.session.username
             }
         );
     }
@@ -114,7 +134,12 @@ app.post('/login', (req, res) => {
         return res.redirect('/');
     }
     return res.render('login', {
-        error: 'Wrong username or password!'
+            title: 'Login',
+            currentPage: 'login',
+            error: 'Wrong username or password!',
+
+            isLoggedIn: req.session.isLoggedIn,
+            username: req.session.username
         }
     );
 });
@@ -125,18 +150,19 @@ app.post('/logout', (req, res) => {
             console.log('Error destroying session:', err);
         }
         res.clearCookie('session');
-        res.redirect('/new');
+        res.redirect('/');
     });
 });
 
 app.post('/comment', (req, res) => {
+    date = new Date()
     if (!req.session.isLoggedIn) {
         return res.redirect('/login'); 
     }
     comments.push( { 
         author: req.session.username, 
         text: req.body.text, 
-        createdAt: new Date() 
+        createdAt: date.toUTCString()
     }); 
     res.redirect('/comments'); 
 });

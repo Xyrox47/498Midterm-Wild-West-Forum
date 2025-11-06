@@ -1,11 +1,22 @@
+<head>
+  <link rel="stylesheet" href="/style.css">
+</head>
 <header>
   <nav>
-    <ul>
-      <li><a href="/">Home</a></li>
-      <li><a href="/register">Register</a></li>
-      <li><a href="/login">Login</a></li>
-      <li><a href="/comments">Comments</a></li>
-      <li><a href="/comment/new">new</a></li>
+    <ul class = "navbar">
+      <li class = "navElement"><a href="/">Home</a></li>      
+      <li class = "navElement"><a href="/comments">Comments</a></li>
+      <li class = "navElement"><a href="/register">Register</a></li>
+      {{#if isLoggedIn}}
+          <li class = "navElement">Hello, {{username}}!</li>
+          <li class = "navElement">          
+            <form action="/logout" method="POST">
+              <button type="submit">Log Out</button>
+            </form>
+          </li>
+      {{else}}
+        <li class = "navElement"><a href="/login">Login</a></li>
+      {{/if}}
     </ul>
   </nav>
 </header>
