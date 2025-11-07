@@ -36,13 +36,7 @@ app.use(session({
 let users = [];
 let comments = [];
 
-// Serve static files from the public directory
-// app.use(express.static('public'));
-
-// API Routes
-// Note: We don't include '/api' in our routes because nginx strips it when forwarding
-// nginx receives: http://localhost/api/users
-// nginx forwards to: http://backend-nodejs:3000/users (without /api)
+// Home 
 app.get('/', (req, res) => {
     res.render('home', {
         title: 'Wild West Forum',
@@ -51,14 +45,10 @@ app.get('/', (req, res) => {
         isLoggedIn: req.session.isLoggedIn,
         username: req.session.username
     });
-    // res.json({ 
-    //     message: 'Hello from the API!',
-    //     timestamp: new Date().toISOString()
-    // });
+
 });
 
 // Get Routes
-
 app.get('/register', (req, res) => {
     res.render('register', {
         title: 'Register',
@@ -101,7 +91,6 @@ app.get('/comment/new', (req, res) => {
     });});
 
 // Post Routes
-
 app.post('/register', (req, res) => {
     const { username, password } = req.body;
     
@@ -128,11 +117,14 @@ app.post('/register', (req, res) => {
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
 
+    // If the entered data matches an existing pair, mark as logged in
+    // and send to home page
     if (users.find(u => u.username === username && u.password === password)) {
         req.session.isLoggedIn = true;
         req.session.username = username;
         return res.redirect('/');
     }
+    // Else render page with error
     return res.render('login', {
             title: 'Login',
             currentPage: 'login',
@@ -144,6 +136,7 @@ app.post('/login', (req, res) => {
     );
 });
 
+// Destroys session cookie and data
 app.post('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
@@ -154,26 +147,24 @@ app.post('/logout', (req, res) => {
     });
 });
 
+
 app.post('/comment', (req, res) => {
     date = new Date()
+
+    // if !logged in, redirect to login page
     if (!req.session.isLoggedIn) {
         return res.redirect('/login'); 
     }
+    // else, add the new comment to the array
     comments.push( { 
         author: req.session.username, 
         text: req.body.text, 
         createdAt: date.toUTCString()
     }); 
+
+    // Change page back to forum
     res.redirect('/comments'); 
 });
-
-
-// app.get('/health', (req, res) => {
-//     res.json({ 
-//         status: 'healthy',
-//         service: 'nodejs-backend'
-//     });
-// });
 
 // Start server
 // Note: We use '0.0.0.0' instead of 'localhost' because Docker containers
