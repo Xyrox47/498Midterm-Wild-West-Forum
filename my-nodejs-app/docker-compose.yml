@@ -17,7 +17,7 @@ services:
     container_name: my-nginx-proxy
     restart: unless-stopped
     ports:
-      - "80:80"  # Only nginx exposes ports to the host
+      - "1555:80"  # Only nginx exposes ports to the host
     depends_on:
       - backend-nodejs
     networks:

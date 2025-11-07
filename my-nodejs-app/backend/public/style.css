@@ -1,0 +1,43 @@
+body {
+  text-align: center;
+  font-family: Arial, sans-serif;
+  margin: 20px;
+  background-color:rgb(199, 199, 255);
+}
+
+h1 {
+  color: #333;
+  text-align: center;
+}
+
+.container {
+  background-color: white;
+  padding: 20px;
+}
+
+.button {
+  font: bold 11px Arial;
+  text-decoration: none;
+  background-color: #EEEEEE;
+  color: #333333;
+  padding: 2px 6px 2px 6px;
+  border-top: 1px solid #CCCCCC;
+  border-right: 1px solid #333333;
+  border-bottom: 1px solid #333333;
+  border-left: 1px solid #CCCCCC;
+}
+
+.navbar {
+    text-align: center;
+    font-size: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 15%;
+    margin-right: 15%;
+}
+
+.navElement {
+    list-style-type: none;
+    margin-right: 20px;
+}
