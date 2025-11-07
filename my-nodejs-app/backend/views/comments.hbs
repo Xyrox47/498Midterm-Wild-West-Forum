@@ -16,6 +16,7 @@
         <a href="/comment/new">New Comment</a>
 
     </main>
+    <!-- If comment array isnt 0 display each comment, else say no comments -->
     <div class="comments-container">
         {{#if comments.length}}
             {{#each comments}}
@@ -37,4 +38,5 @@
     {{> footer}}
 </body>
 </html>
+
 
