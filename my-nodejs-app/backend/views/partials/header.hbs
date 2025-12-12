@@ -6,7 +6,7 @@
     <ul class = "navbar">
       <li class = "navElement"><a href="/">Home</a></li>      
       <li class = "navElement"><a href="/comments">Comments</a></li>
-      <li class = "navElement"><a href="/register">Register</a></li>
+      <li class = "navElement"><a href="/api/auth/register">Register</a></li>
       
       <!-- 
           If user is logged in display their name in the navbar next to the logout button
@@ -20,7 +20,7 @@
             </form>
           </li>
       {{else}}
-        <li class = "navElement"><a href="/login">Login</a></li>
+        <li class = "navElement"><a href="/api/auth/login">Login</a></li>
       {{/if}}
     </ul>
   </nav>
