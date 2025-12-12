@@ -23,30 +23,37 @@ router.post('/register', async (req, res) => {
     if (!username || !password) {
       return res.redirect('/api/auth/register?error=' + encodeURIComponent('Username and password are required'));
     }
-    
+    console.log("Validated input");
     // Validate password requirements
     const validation = validatePassword(password);
     if (!validation.valid) {
       const errorsText = validation.errors.join(', ');
       return res.redirect('/api/auth/register?error=' + encodeURIComponent('Password does not meet requirements: ' + errorsText));
     }
-    
+    console.log("Validated password requirements");
+
     // Check if username already exists
     const existingUser = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
     if (existingUser) {
       return res.redirect('/api/auth/register?error=' + encodeURIComponent('Username already exists. Please choose a different username.'));
     }
-    
+    console.log("Validated username is unique");
+
     // Hash the password before storing
     const passwordHash = await hashPassword(password);
-    
+    console.log("Hash Password");
+
     // Insert new user into database
     const stmt = db.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)');
     const result = stmt.run(username, passwordHash);
-    
+    console.log("Insert new user");
+
+
+    // WENT TO 404
     // Redirect to success page with username
     res.redirect(`/register-success.html?username=${encodeURIComponent(username)}&userId=${result.lastInsertRowid}`);
-    
+    console.log("Passed success redirect");
+
   } catch (error) {
     console.error('Registration error:', error);
     res.redirect('/error.html?message=' + encodeURIComponent('An internal server error occurred. Please try again later.') + '&back=/api/auth/register');

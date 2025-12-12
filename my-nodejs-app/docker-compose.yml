@@ -7,6 +7,8 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+    volumes:
+      - ./backend/databases:/app/databases
     # No ports exposed - only nginx can access this container
     networks:
       - app-network

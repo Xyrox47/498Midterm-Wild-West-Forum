@@ -50,12 +50,14 @@ function validatePassword(password) {
 
 // simple function that will hash a password.
 async function hashPassword(password) {
-  return await argon2.hash(password, ARGON2_OPTIONS);
+  console.log("Hash started:", new Date().toISOString());
+  const result = await argon2.hash(password, ARGON2_OPTIONS);
+  console.log("Hash completed:", new Date().toISOString());
+  return result;
 }
 
 
 // Compares a plain text password with a hashed password
-
 async function comparePassword(password, hash) {
   return await argon2.verify(hash, password);
 }
