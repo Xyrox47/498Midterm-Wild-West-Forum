@@ -107,15 +107,43 @@ router.post('/login', async (req, res) => {
       return res.redirect('/api/auth/login?error=' + encodeURIComponent('Invalid username or password'));
     }
 
+    // SECURITY VULNERABLITY
+    // This reveals an active username because currently only active usernames can be locked
+    // REMEMBER TO CHECK AGAIN LATER
+    // IF YOU ARE READING THIS TROY, I FORGOT
+
+    if (user.account_lock_expiry) {
+      const lockExpiry = new Date(user.account_lock_expiry);
+      const now = new Date();
+      if (now < lockExpiry) {
+        return res.redirect('/api/auth/login?error=' + encodeURIComponent('Too many failed attempts. Account already locked.'));
+      }
+      else {
+        db.prepare('UPDATE users SET failed_login_attempts = 0, account_lock_expiry = NULL WHERE id = ?')
+          .run(user.id);
+      }
+    }
+
     // Compare entered password with stored hash
     const passwordMatch = await comparePassword(password, user.password_hash);
     
     if (!passwordMatch) {
       console.log("User password doesn't match");
+      // Log failed attempt
       const stmt = db.prepare('INSERT INTO loginAttempts (username, IP, success) VALUES (?, ?, ?)');
       const result = stmt.run(username, IP, 0);
+
+      // Update user's failed count
       db.prepare('UPDATE users SET failed_login_attempts = failed_login_attempts + 1 WHERE id = ?')
         .run(user.id);
+
+      const userFails = db.prepare('SELECT failed_login_attempts FROM users WHERE id = ?').get(user.id);
+      // Lockout if fails = 5
+      if (userFails.failed_login_attempts >= 5){
+        db.prepare("UPDATE users SET account_lock_expiry = DATETIME('now', '+15 minutes') WHERE id = ?")
+          .run(user.id);
+        return res.redirect('/api/auth/login?error=' + encodeURIComponent('Too many failed attempts. Account locked for 15 minutes.'));
+      }
       return res.redirect('/api/auth/login?error=' + encodeURIComponent('Invalid username or password'));
     }
     

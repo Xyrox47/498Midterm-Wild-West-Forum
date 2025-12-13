@@ -15,6 +15,7 @@ db.exec(`
         display_name TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         failed_login_attempts INTEGER DEFAULT 0,
+        account_lock_expiry DATETIME,
         last_login DATETIME
     );
 `);
