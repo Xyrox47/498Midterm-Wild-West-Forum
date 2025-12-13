@@ -24,7 +24,7 @@ router.post('/register', async (req, res) => {
     if ( !email || !username || !display_name || !password) {
       return res.redirect('/api/auth/register?error=' + encodeURIComponent('All fields are required'));
     }
-    console.log("Validated input");
+    console.log("Validated register input");
 
     // Validate username!=display_name
     if ( username === display_name ) {
@@ -87,31 +87,44 @@ router.get('/login', (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
+    const IP = getClientIP(req);
     
     // Validate input
     if (!username || !password) {
       return res.redirect('/api/auth/login?error=' + encodeURIComponent('Username and password are required'));
     }
-    
+    console.log("Validated login input");
+
     // Find user by username
     const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
-    
+    console.log("Tried to find user in table");
+
     if (!user) {
       // Don't reveal if username exists (security best practice)
+      console.log("No user in database");
+      const stmt = db.prepare('INSERT INTO loginAttempts (username, IP, success) VALUES (?, ?, ?)');
+      const result = stmt.run(username, IP, 0);
       return res.redirect('/api/auth/login?error=' + encodeURIComponent('Invalid username or password'));
     }
-    
+
     // Compare entered password with stored hash
     const passwordMatch = await comparePassword(password, user.password_hash);
     
     if (!passwordMatch) {
+      console.log("User password doesn't match");
+      const stmt = db.prepare('INSERT INTO loginAttempts (username, IP, success) VALUES (?, ?, ?)');
+      const result = stmt.run(username, IP, 0);
+      db.prepare('UPDATE users SET failed_login_attempts = failed_login_attempts + 1 WHERE id = ?')
+        .run(user.id);
       return res.redirect('/api/auth/login?error=' + encodeURIComponent('Invalid username or password'));
     }
     
     // Successful login - update last login time
     db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?')
       .run(user.id);
-    
+
+    const stmt = db.prepare('INSERT INTO loginAttempts (username, IP, success) VALUES (?, ?, ?)');
+    const result = stmt.run(username, IP, 1);
     // Create session
     req.session.userId = user.id;
     req.session.username = user.username;
@@ -177,5 +190,12 @@ router.get('/me', (req, res) => {
   
   res.redirect(`/profile.html?${params.toString()}`);
 });
+
+function getClientIP(req) {
+  return req.ip || 
+         req.headers['x-forwarded-for']?.split(',')[0] || 
+         req.connection.remoteAddress || 
+         'unknown';
+}
 
 module.exports = router;

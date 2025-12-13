@@ -9,6 +9,7 @@ const createRouter = require('./modules/routing');
 const SQLiteStore = require('./modules/sqlite-session-store');
 const authRoutes = require('./routes/auth');
 const { requireAuth } = require('./modules/auth-middleware');
+const commentRoutes = require('./routes/comments');
 
 // Body parsing middleware
 app.use(express.json());
@@ -45,6 +46,9 @@ app.use('/api/auth', authRoutes);
 app.get('/api/protected', requireAuth, (req, res) => {
   res.send(`Protected route that needs authentication. User: ${req.session.username} ID: ${req.session.userId}`);
 });
+
+app.use('/comments', commentRoutes);
+
 
 app.use('/', createRouter());
 

@@ -36,27 +36,29 @@ module.exports = function createRouter() {
     //         username: req.session.username
     //     });});
 
-    router.get('/comments', (req, res) => {
-        res.render('comments', {
-            title: 'Comments',
-            currentPage: 'comments',
-            comments: comments,
+    // router.get('/comments', (req, res) => {
+    //     res.render('comments', {
+    //         title: 'Comments',
+    //         currentPage: 'comments',
+    //         comments: comments,
 
-            isLoggedIn: req.session.isLoggedIn,
-            username: req.session.username
-        });});
+    //         isLoggedIn: req.session.isLoggedIn,
+    //         username: req.session.username
+    //     });
+    // });
 
-    router.get('/comment/new', (req, res) => {
-        if (!req.session.isLoggedIn) {
-            return res.redirect('/login'); 
-        }
-        res.render('new', {
-            title: 'New Comment',
-            currentPage: 'new',
+    // router.get('/comment/new', (req, res) => {
+    //     if (!req.session.isLoggedIn) {
+    //         return res.redirect('/login'); 
+    //     }
+    //     res.render('new', {
+    //         title: 'New Comment',
+    //         currentPage: 'new',
 
-            isLoggedIn: req.session.isLoggedIn,
-            username: req.session.username
-        });});
+    //         isLoggedIn: req.session.isLoggedIn,
+    //         username: req.session.username
+    //     });
+    // });
 
     // 404 Errors
     router.use((req, res) => {
@@ -155,23 +157,23 @@ module.exports = function createRouter() {
     // });
 
 
-    router.post('/comment', (req, res) => {
-        date = new Date()
+    // router.post('/comment', (req, res) => {
+    //     date = new Date()
 
-        // if !logged in, redirect to login page
-        if (!req.session.isLoggedIn) {
-            return res.redirect('/api/auth/login'); 
-        }
-        // else, add the new comment to the array
-        comments.push( { 
-            author: req.session.username, 
-            text: req.body.text, 
-            createdAt: date.toUTCString()
-        }); 
+    //     // if !logged in, redirect to login page
+    //     if (!req.session.isLoggedIn) {
+    //         return res.redirect('/api/auth/login'); 
+    //     }
+    //     // else, add the new comment to the array
+    //     comments.push( { 
+    //         author: req.session.username, 
+    //         text: req.body.text, 
+    //         createdAt: date.toUTCString()
+    //     }); 
 
-        // Change page back to forum
-        res.redirect('/comments'); 
-    });
+    //     // Change page back to forum
+    //     res.redirect('/comments'); 
+    // });
     
     return router;
 };
