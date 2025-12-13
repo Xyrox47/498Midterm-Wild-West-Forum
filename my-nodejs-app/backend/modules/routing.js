@@ -160,7 +160,7 @@ module.exports = function createRouter() {
 
         // if !logged in, redirect to login page
         if (!req.session.isLoggedIn) {
-            return res.redirect('/login'); 
+            return res.redirect('/api/auth/login'); 
         }
         // else, add the new comment to the array
         comments.push( { 

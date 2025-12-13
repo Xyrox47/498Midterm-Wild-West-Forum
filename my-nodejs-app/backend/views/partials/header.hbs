@@ -15,9 +15,7 @@
       {{#if isLoggedIn}}
           <li class = "navElement">Hello, {{username}}!</li>
           <li class = "navElement">          
-            <form action="/logout" method="POST">
-              <button type="submit">Log Out</button>
-            </form>
+            <p><a href="/api/auth/logout">Logout</a></p>
           </li>
       {{else}}
         <li class = "navElement"><a href="/api/auth/login">Login</a></li>

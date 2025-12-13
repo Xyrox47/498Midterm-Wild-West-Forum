@@ -4,6 +4,7 @@ const router = express.Router();
 const path = require('path');
 const db = require('../modules/database');
 const { validatePassword, hashPassword, comparePassword } = require('../modules/password-utils');
+const validator = require('validator'); // For the email validation function
 
 /**
  * GET /register - Show registration form
@@ -17,13 +18,26 @@ router.get('/register', (req, res) => {
  */
 router.post('/register', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { email, username, display_name, password } = req.body;
     
     // Validate input
-    if (!username || !password) {
-      return res.redirect('/api/auth/register?error=' + encodeURIComponent('Username and password are required'));
+    if ( !email || !username || !display_name || !password) {
+      return res.redirect('/api/auth/register?error=' + encodeURIComponent('All fields are required'));
     }
     console.log("Validated input");
+
+    // Validate username!=display_name
+    if ( username === display_name ) {
+      return res.redirect('/api/auth/register?error=' + encodeURIComponent('Username and Display Name cannot match'));
+    }
+    console.log("Validated user and display different");
+
+    // Validate email format on registration (and on updates later)
+    if ( !validator.isEmail(email) ) {
+      return res.redirect('/api/auth/register?error=' + encodeURIComponent('Not a valid email'));
+    }
+    console.log("Validated email");
+
     // Validate password requirements
     const validation = validatePassword(password);
     if (!validation.valid) {
@@ -44,8 +58,8 @@ router.post('/register', async (req, res) => {
     console.log("Hash Password");
 
     // Insert new user into database
-    const stmt = db.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)');
-    const result = stmt.run(username, passwordHash);
+    const stmt = db.prepare('INSERT INTO users (username, password_hash, email, display_name) VALUES (?, ?, ?, ?)');
+    const result = stmt.run(username, passwordHash, email, display_name);
     console.log("Insert new user");
 
 
