@@ -4,6 +4,7 @@ const path = require('path');
 const db = require('../modules/database');
 
 
+
 router.get('/', (req, res) => {
     const comments = db.prepare('SELECT * FROM comments ORDER BY created_at DESC').all();
 

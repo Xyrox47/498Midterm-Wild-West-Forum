@@ -13,12 +13,13 @@ db.exec(`
         password_hash TEXT NOT NULL,
         email TEXT UNIQUE NOT NULL,
         display_name TEXT NOT NULL,
+        user_color TEXT DEFAULT ('#000000'),
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         failed_login_attempts INTEGER DEFAULT 0,
         account_lock_expiry DATETIME,
         last_login DATETIME
     );
-`);
+`); 
 
 // db.exec(`
 //     CREATE TABLE IF NOT EXISTS users (
@@ -40,7 +41,6 @@ db.exec(`
         content TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id)
-        FOREIGN KEY (display_name) REFERENCES users(display_name)
     );
 `)
 

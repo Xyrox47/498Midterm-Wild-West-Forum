@@ -32,11 +32,18 @@ router.post('/register', async (req, res) => {
     }
     console.log("Validated user and display different");
 
-    // Validate email format on registration (and on updates later)
+    // Validate email format on registration
     if ( !validator.isEmail(email) ) {
       return res.redirect('/api/auth/register?error=' + encodeURIComponent('Not a valid email'));
     }
     console.log("Validated email");
+
+    // Validate email is unique
+    const existingEmail = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+    if (existingEmail) {
+      return res.redirect('/api/auth/register?error=' + encodeURIComponent('Email already used. Please choose a different email.'));
+    }
+    console.log("Validated email is unique");
 
     // Validate password requirements
     const validation = validatePassword(password);
@@ -201,22 +208,227 @@ router.get('/me', (req, res) => {
     return res.redirect('/error.html?message=' + encodeURIComponent('You must be logged in to view this page.') + '&back=/api/auth/login');
   }
   
-  const user = db.prepare('SELECT id, username, created_at, last_login FROM users WHERE id = ?')
+  const user = db.prepare('SELECT id, username, display_name, user_color, created_at, last_login FROM users WHERE id = ?')
     .get(req.session.userId);
   
   if (!user) {
     return res.redirect('/error.html?message=' + encodeURIComponent('User not found in database.') + '&back=/');
   }
   
-  // Pass user data as query parameters to the profile page
-  const params = new URLSearchParams({
-    id: user.id,
-    username: user.username,
-    created_at: user.created_at || 'N/A',
-    last_login: user.last_login || 'Never'
+  // // Pass user data as query parameters to the profile page
+  // const params = new URLSearchParams({
+  //   id: user.id,
+  //   username: user.username,
+  //   created_at: user.created_at || 'N/A',
+  //   last_login: user.last_login || 'Never'
+  // });
+ 
+
+  res.render('profile', {
+      currentPage: 'profile',
+      display_name: user.display_name,
+      userColor: user.user_color,
+      isLoggedIn: req.session.isLoggedIn,
+      username: req.session.username
   });
-  
-  res.redirect(`/profile.html?${params.toString()}`);
+  // res.redirect(`/profile.html?${params.toString()}`);
+});
+
+
+
+/*
+ *
+ * POST /changePassword - Authenticate password change
+ */
+router.post('/changePassword', async (req, res) => {
+  try {
+    const { curPassword, newPassword } = req.body;
+    
+    // Validate input
+    if (!curPassword || !newPassword) {
+      return res.redirect('/api/auth/profile.html?error=' + encodeURIComponent('Current and New passwords are required'));
+    }
+    console.log("Validated PC input");
+
+    // Find user by username
+    const user = db.prepare('SELECT id, username, password_hash, email, display_name, created_at, last_login FROM users WHERE id = ?')
+      .get(req.session.userId);   
+    username = user.username;
+    console.log("Tried to find user in table PC");
+
+    // Compare entered password with stored hash
+    const passwordMatch = await comparePassword(curPassword, user.password_hash);
+    if (!passwordMatch) {
+      console.log("User password doesn't match");
+      return res.redirect('/api/auth/profile.html?error=' + encodeURIComponent('Incorrect Password'));
+    }
+    console.log("Password is correct PC");
+
+    // Validate password requirements
+    const validation = validatePassword(newPassword);
+    if (!validation.valid) {
+      const errorsText = validation.errors.join(', ');
+      return res.redirect('/api/auth/profile.html?error=' + encodeURIComponent('Password does not meet requirements: ' + errorsText));
+    }
+    console.log("Validated password requirements PC");
+
+    // Hash the password before storing
+    const passwordHash = await hashPassword(newPassword);
+    console.log("Hash Password PC");
+
+    // Insert new user into database
+    db.prepare('UPDATE users SET password_hash = ? WHERE id = ?')
+      .run(passwordHash, user.id);
+    // const stmt = db.prepare('INSERT INTO users (username, password_hash, email, display_name) VALUES (?, ?, ?, ?)');
+    // const result = stmt.run(username, passwordHash, email, display_name);
+    console.log("Updated user password PC");
+
+    // Redirect to success page
+    res.redirect(`/login-success.html?username=${encodeURIComponent(user.username)}`);
+    
+  } catch (error) {
+    console.error('Change error:', error);
+    res.redirect('/error.html?message=' + encodeURIComponent('An internal server error occurred. Please try again later.') + '&back=/api/auth/login');
+  }
+});
+
+/*
+ *
+ * POST /changeEmail - Authenticate email change
+ */
+router.post('/changeEmail', async (req, res) => {
+  try {
+    const { password, newEmail } = req.body;
+    
+    // Validate input
+    if ( !password || !newEmail ) {
+      return res.redirect('/api/auth/profile.html?error=' + encodeURIComponent('Current and New passwords are required'));
+    }
+    console.log("Validated EC input");
+
+    // Find user by username
+    const user = db.prepare('SELECT id, username, password_hash, email, display_name, created_at, last_login FROM users WHERE id = ?')
+      .get(req.session.userId);   
+    username = user.username;
+    console.log("Tried to find user in table EC");
+
+    // Compare entered password with stored hash
+    const passwordMatch = await comparePassword(password, user.password_hash);
+    if (!passwordMatch) {
+      console.log("User password doesn't match EC");
+      return res.redirect('/api/auth/profile.html?error=' + encodeURIComponent('Incorrect Password'));
+    }
+    console.log("Password is correct PC");
+
+    // Validate email format on update
+    if ( !validator.isEmail(newEmail) ) {
+      return res.redirect('/api/auth/register?error=' + encodeURIComponent('Not a valid email'));
+    }
+    console.log("Validated email EC");
+
+    // Validate email is unique
+    const existingEmail = db.prepare('SELECT id FROM users WHERE email = ?').get(newEmail);
+    if (existingEmail) {
+      return res.redirect('/api/auth/register?error=' + encodeURIComponent('Email already used. Please choose a different email.'));
+    }
+    console.log("Validated email is unique EC");
+
+    // Update email in user database
+    db.prepare('UPDATE users SET email = ? WHERE id = ?')
+      .run(newEmail, user.id);
+    // const stmt = db.prepare('INSERT INTO users (username, password_hash, email, display_name) VALUES (?, ?, ?, ?)');
+    // const result = stmt.run(username, passwordHash, email, display_name);
+    console.log("Updated user email EC");
+
+    // Redirect to success page
+    res.redirect(`/login-success.html?username=${encodeURIComponent(user.username)}`);
+    
+  } catch (error) {
+    console.error('Change error:', error);
+    res.redirect('/error.html?message=' + encodeURIComponent('An internal server error occurred. Please try again later.') + '&back=/api/auth/login');
+  }
+});
+
+/*
+ *
+ * POST /changeDisplayName - Authenticate email change
+ */
+router.post('/changeDisplayName', async (req, res) => {
+  try {
+    const { password, newDisplayName } = req.body;
+    
+    // Validate input
+    if ( !password || !newDisplayName ) {
+      return res.redirect('/api/auth/profile.html?error=' + encodeURIComponent('Current and New passwords are required'));
+    }
+    console.log("Validated EC input");
+
+    // Find user by username
+    const user = db.prepare('SELECT id, username, password_hash, email, display_name, created_at, last_login FROM users WHERE id = ?')
+      .get(req.session.userId);   
+    username = user.username;
+    console.log("Tried to find user in table EC");
+
+    // Compare entered password with stored hash
+    const passwordMatch = await comparePassword(password, user.password_hash);
+    if (!passwordMatch) {
+      console.log("User password doesn't match EC");
+      return res.redirect('/api/auth/profile.html?error=' + encodeURIComponent('Incorrect Password'));
+    }
+    console.log("Password is correct DNC");
+
+    // Validate display name limitations
+    // Currently none
+
+    // Update display name in user database
+    db.prepare('UPDATE users SET display_name = ? WHERE id = ?')
+      .run(newDisplayName, user.id);
+    console.log("Updated user display name DNC");
+
+    // Redirect to success page
+    res.redirect(`/login-success.html?username=${encodeURIComponent(user.username)}`);
+    
+  } catch (error) {
+    console.error('Change error:', error);
+    res.redirect('/error.html?message=' + encodeURIComponent('An internal server error occurred. Please try again later.') + '&back=/api/auth/login');
+  }
+});
+
+/*
+ *
+ * POST /changeDisplayName - Authenticate email change
+ */
+router.post('/changeNameColor', async (req, res) => {
+  try {
+    const { newColor } = req.body;
+    
+    // Validate input
+    if ( !newColor ) {
+      return res.redirect('/api/auth/me?error=' + encodeURIComponent('Current and New passwords are required'));
+    }
+    if (!validator.isHexColor(newColor)){
+      return res.redirect('/api/auth/me?error=' + encodeURIComponent('Invalid Color'));
+    }
+    console.log("Validated NCC input");
+
+    // Find user by username
+    const user = db.prepare('SELECT id, username, password_hash, email, display_name, created_at, last_login FROM users WHERE id = ?')
+      .get(req.session.userId);   
+    username = user.username;
+    console.log("Tried to find user in table NCC");
+
+    // Update user_color in user database
+    db.prepare('UPDATE users SET user_color = ? WHERE id = ?')
+      .run(newColor, user.id);
+    console.log("Updated user display name DNC");
+
+    // Redirect to success page
+    res.redirect(`/login-success.html?username=${encodeURIComponent(user.username)}`);
+    
+  } catch (error) {
+    console.error('Change error:', error);
+    res.redirect('/error.html?message=' + encodeURIComponent('An internal server error occurred. Please try again later.') + '&back=/api/auth/login');
+  }
 });
 
 function getClientIP(req) {
