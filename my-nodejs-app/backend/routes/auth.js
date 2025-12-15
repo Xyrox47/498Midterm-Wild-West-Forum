@@ -5,6 +5,8 @@ const path = require('path');
 const db = require('../modules/database');
 const { validatePassword, hashPassword, comparePassword } = require('../modules/password-utils');
 const validator = require('validator'); // For the email validation function
+const emailSender = require('../config/email');
+
 
 /**
  * GET /register - Show registration form
@@ -109,8 +111,8 @@ router.post('/login', async (req, res) => {
     if (!user) {
       // Don't reveal if username exists (security best practice)
       console.log("No user in database");
-      const stmt = db.prepare('INSERT INTO loginAttempts (username, IP, success) VALUES (?, ?, ?)');
-      const result = stmt.run(username, IP, 0);
+      db.prepare('INSERT INTO loginAttempts (username, IP, success) VALUES (?, ?, ?)')
+        .run(username, IP, 0);
       return res.redirect('/api/auth/login?error=' + encodeURIComponent('Invalid username or password'));
     }
 
@@ -336,8 +338,6 @@ router.post('/changeEmail', async (req, res) => {
     // Update email in user database
     db.prepare('UPDATE users SET email = ? WHERE id = ?')
       .run(newEmail, user.id);
-    // const stmt = db.prepare('INSERT INTO users (username, password_hash, email, display_name) VALUES (?, ?, ?, ?)');
-    // const result = stmt.run(username, passwordHash, email, display_name);
     console.log("Updated user email EC");
 
     // Redirect to success page
@@ -420,7 +420,7 @@ router.post('/changeNameColor', async (req, res) => {
     // Update user_color in user database
     db.prepare('UPDATE users SET user_color = ? WHERE id = ?')
       .run(newColor, user.id);
-    console.log("Updated user display name DNC");
+    console.log("Updated user display name NCC");
 
     // Redirect to success page
     res.redirect(`/login-success.html?username=${encodeURIComponent(user.username)}`);
@@ -430,6 +430,166 @@ router.post('/changeNameColor', async (req, res) => {
     res.redirect('/error.html?message=' + encodeURIComponent('An internal server error occurred. Please try again later.') + '&back=/api/auth/login');
   }
 });
+
+/**
+ * GET /forgot-password - Show forgot password form
+ */
+router.get('/forgot-password', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/forgot-password.html'));
+});
+
+/**
+ * POST /forgot-password - Generate and send token
+ */
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    // Validate input
+    if ( !email ) {
+      return res.redirect('/api/auth/register?forgot-password=' + encodeURIComponent('All fields are required'));
+    }
+    console.log("Validated FP input");
+
+    // Validate email format on registration
+    if ( !validator.isEmail(email) ) {
+      return res.redirect('/api/auth/register?error=' + encodeURIComponent('Not a valid email'));
+    }
+    console.log("Validated PF email");
+
+    // Validate email is unique
+    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    if (!user.email) {
+      return res.redirect('/api/auth/register?error=' + encodeURIComponent('Email Sent (Not really)'));
+    }
+    console.log("Validated email is in database FP");
+
+    // Generate Token
+    const token = createToken(6);
+    db.prepare("UPDATE users SET reset_token = ?, reset_token_expiry = DATETIME('now', '+15 minutes') WHERE id = ?")
+      .run(token, user.id);
+    console.log("Validated token and expiry is in database FP");
+
+
+    // Send email 
+    // const subject = "Rubicunda.org Password Reset";
+    // const contents = `Here is your temporary password reset token: '${token}'`;
+    try {
+        await emailSender.sendPasswordReset(email, user.username, token);
+    } catch (error) {
+        console.error('Password reset email failed to send', error);
+    }
+
+    // Redirect to password reset page / token login
+    res.sendFile(path.join(__dirname, '../public/reset-password.html'));
+
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.redirect('/error.html?message=' + encodeURIComponent('An internal server error occurred. Please try again later.') + '&back=/api/auth/register');
+  }
+});
+
+/**
+ * GET /reset-password - Show reset password form
+ */
+router.get('/reset-password', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/reset-password.html'));
+});
+
+/**
+ * POST /reset-password - Login with token and add new password
+ */
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { username, token, newPassword } = req.body;
+    const IP = getClientIP(req);
+    
+    // Validate input
+    if (!username || !token || !newPassword) {
+      return res.redirect('/api/auth/login?error=' + encodeURIComponent('All fields are required'));
+    }
+    console.log("Validated login input PR");
+
+    // Find user by username
+    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+    console.log("Tried to find user in table PR");
+
+    if (!user) {
+      // Don't reveal if username exists (security best practice)
+      console.log("No user in database PR");
+      db.prepare('INSERT INTO loginAttempts (username, IP, success) VALUES (?, ?, ?)')
+        .run(username, IP, 0);
+      return res.redirect('/api/auth/login?error=' + encodeURIComponent('Invalid username or token'));
+    }
+
+    if (user.reset_token_expiry) {
+      const lockExpiry = new Date(user.reset_token_expiry);
+      const now = new Date();
+      // Is it before the expiration date?
+      if (now > lockExpiry) {
+        return res.redirect('/api/auth/login?error=' + encodeURIComponent('Token Expired. Please request a new Token.'));
+      }
+    }
+
+    // Compare entered password with stored hash
+    const tokenMatch = token===user.reset_token
+
+    // const passwordMatch = await comparePassword(password, user.password_hash);
+    
+    if (!tokenMatch) {
+      console.log("User token doesn't match PR");
+      // Log failed attempt
+      db.prepare('INSERT INTO loginAttempts (username, IP, success) VALUES (?, ?, ?)')
+        .run(username, IP, 0);
+    }
+
+    // Validate password requirements
+    const validation = validatePassword(newPassword);
+    if (!validation.valid) {
+      const errorsText = validation.errors.join(', ');
+      return res.redirect('/api/auth/register?error=' + encodeURIComponent('Password does not meet requirements: ' + errorsText));
+    }
+    
+    // Hash the password before storing
+    const passwordHash = await hashPassword(newPassword);
+    console.log("Hash Password PR");
+
+    // Insert new user into database
+    db.prepare('UPDATE users SET password_hash = ? WHERE id = ?')
+      .run(passwordHash, user.id);
+    console.log("Updated password PR");
+
+    // Successful login - update last login time
+    db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?')
+      .run(user.id);
+
+    // Remove token
+    db.prepare('UPDATE users SET reset_token = NULL, reset_token_expiry = NULL WHERE id = ?')
+      .run(user.id);
+
+    // Create session
+    req.session.userId = user.id;
+    req.session.username = user.username;
+    req.session.isLoggedIn = true;
+    
+    // Redirect to success page
+    res.redirect(`/login-success.html?username=${encodeURIComponent(user.username)}`);
+    
+  } catch (error) {
+    console.error('Login error:', error);
+    res.redirect('/error.html?message=' + encodeURIComponent('An internal server error occurred. Please try again later.') + '&back=/api/auth/login');
+  }
+});
+
+function createToken(length) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
 
 function getClientIP(req) {
   return req.ip || 

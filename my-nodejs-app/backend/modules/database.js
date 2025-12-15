@@ -17,6 +17,8 @@ db.exec(`
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         failed_login_attempts INTEGER DEFAULT 0,
         account_lock_expiry DATETIME,
+        reset_token TEXT,
+        reset_token_expiry DATETIME,
         last_login DATETIME
     );
 `); 
