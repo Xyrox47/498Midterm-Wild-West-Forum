@@ -6,14 +6,18 @@
     <ul class = "navbar">
       <li class = "navElement"><a href="/">Home</a></li>      
       <li class = "navElement"><a href="/comments">Comments</a></li>
+      <li class = "navElement"><a href="/livechat">Live Chat!</a></li>
       <li class = "navElement"><a href="/api/auth/register">Register</a></li>
-      
+
       <!-- 
           If user is logged in display their name in the navbar next to the logout button
           else display login button
       -->
       {{#if isLoggedIn}}
           <li class = "navElement">Hello, {{username}}!</li>
+          <li class = "navElement">          
+            <p><a href="/profile/me">Your Profile</a></p>
+          </li>
           <li class = "navElement">          
             <p><a href="/api/auth/logout">Logout</a></p>
           </li>

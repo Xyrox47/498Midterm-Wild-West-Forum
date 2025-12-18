@@ -33,7 +33,7 @@ async function sendPasswordReset(email, username, token) {
   } catch (error) {
     console.log("I DID NOT worked!")
 
-    console.log(error); //logs any error
+    console.log(error);
   }
 }
 

@@ -72,7 +72,6 @@ router.post('/register', async (req, res) => {
     console.log("Insert new user");
 
 
-    // WENT TO 404
     // Redirect to success page with username
     res.redirect(`/register-success.html?username=${encodeURIComponent(username)}&userId=${result.lastInsertRowid}`);
     console.log("Passed success redirect");
@@ -166,7 +165,8 @@ router.post('/login', async (req, res) => {
     req.session.userId = user.id;
     req.session.username = user.username;
     req.session.isLoggedIn = true;
-    
+    req.session.displayName = user.display_name;
+    req.session.name_color = user.user_color
     // Redirect to success page
     res.redirect(`/login-success.html?username=${encodeURIComponent(user.username)}`);
     
@@ -201,42 +201,6 @@ router.post('/logout', (req, res) => {
     res.redirect('/logged-out.html');
   });
 });
-
-/**
- * GET /me - Get current user info (requires authentication)
- */
-router.get('/me', (req, res) => {
-  if (!req.session || !req.session.userId) {
-    return res.redirect('/error.html?message=' + encodeURIComponent('You must be logged in to view this page.') + '&back=/api/auth/login');
-  }
-  
-  const user = db.prepare('SELECT id, username, display_name, user_color, created_at, last_login FROM users WHERE id = ?')
-    .get(req.session.userId);
-  
-  if (!user) {
-    return res.redirect('/error.html?message=' + encodeURIComponent('User not found in database.') + '&back=/');
-  }
-  
-  // // Pass user data as query parameters to the profile page
-  // const params = new URLSearchParams({
-  //   id: user.id,
-  //   username: user.username,
-  //   created_at: user.created_at || 'N/A',
-  //   last_login: user.last_login || 'Never'
-  // });
- 
-
-  res.render('profile', {
-      currentPage: 'profile',
-      display_name: user.display_name,
-      userColor: user.user_color,
-      isLoggedIn: req.session.isLoggedIn,
-      username: req.session.username
-  });
-  // res.redirect(`/profile.html?${params.toString()}`);
-});
-
-
 
 /*
  *
@@ -559,7 +523,7 @@ router.post('/reset-password', async (req, res) => {
       .run(passwordHash, user.id);
     console.log("Updated password PR");
 
-    // Successful login - update last login time
+    // Successful login then update last login time
     db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?')
       .run(user.id);
 

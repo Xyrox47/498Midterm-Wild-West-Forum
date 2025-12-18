@@ -23,23 +23,20 @@ db.exec(`
     );
 `); 
 
-// db.exec(`
-//     CREATE TABLE IF NOT EXISTS users (
-//         id INTEGER PRIMARY KEY AUTOINCREMENT,
-//         username TEXT UNIQUE NOT NULL,
-//         password TEXT NOT NULL,
-//         email TEXT UNIQUE NOT NULL,
-//         display_name TEXT UNIQUE NOT NULL,
-//         profile_name_color INTEGER NOT NULL DEFAULT 0,
-//         failed_attempts INTEGER NOT NULL DEFAULT 0
-//     );
-// `)
-
 db.exec(`
     CREATE TABLE IF NOT EXISTS comments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
-        display_name TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+`)
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
         content TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id)

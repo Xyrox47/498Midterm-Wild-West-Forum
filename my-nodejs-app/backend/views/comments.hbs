@@ -12,7 +12,7 @@
 
     <main>
         <h1>{{title}}</h1>
-        <a href="/comment/new">New Comment</a>
+        <a href="/comments/new">New Comment</a>
 
     </main>
     <!-- If comment array isnt 0 display each comment, else say no comments -->
@@ -21,14 +21,35 @@
             {{#each comments}}
             <div class="comment">
                 <div class="comment-author">
-                    <strong>{{this.display_name}}</strong>
+                    {{#if (eq this.user_id ../currentUserID)}}
+                    <a href="/profile/me" style="color: {{this.user_color}}; text-decoration: none;">
+                        <strong>{{this.display_name}}</strong>
+                    </a>
+                    {{else}}
+                    <a href="/profile/{{this.user_id}}" style="color: {{this.user_color}}; text-decoration: none;">
+                        <strong>{{this.display_name}}</strong>
+                    </a>
+                    {{/if}}
                     <span class="comment-date">{{this.created_at}}</span>
                 </div>
+
                 <div class="comment-text">
                     {{this.content}}
                 </div>
             </div>
             {{/each}}
+        <div class="pagination">
+            {{#if hasPrevPage}}
+                <a href="/comments?page={{prevPage}}">← Previous</a>
+            {{/if}}
+            
+            <span>Page {{currentPage}} of {{totalPages}}</span>
+            
+            {{#if hasNextPage}}
+                <a href="/comments?page={{nextPage}}">Next →</a>
+            {{/if}}
+        </div>
+
         {{else}}
             <p>No comments posted</p>
         {{/if}}

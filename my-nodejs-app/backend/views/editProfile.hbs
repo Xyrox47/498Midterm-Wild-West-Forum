@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/style.css">
+  <title>HBS User Profile</title>
+</head>
+<body>
+  {{> header}}
+  <h1 style="color: {{user.user_color}}">{{user.display_name}}</h1>
+  <div id="user-info">
+    <div>
+      <h1>Change Password</h1>
+        <div>
+          <strong>Password Requirements:</strong>
+          <ul>
+            <li>At least 8 characters long</li>
+            <li>At least one uppercase letter</li>
+            <li>At least one lowercase letter</li>
+            <li>At least one number</li>
+            <li>At least one special character</li>
+          </ul>
+        </div>
+        <form method="POST" action="/api/auth/changePassword">
+          <div>
+            <label for="curPassword">Current Password:</label>
+            <input type="password" id="curPassword" name="curPassword" required>
+          </div>
+          <div>
+            <label for="newPassword">New Password:</label>
+            <input type="password" id="newPassword" name="newPassword" required>
+          </div>
+          <button type="submit">Change Password</button>
+        </form> 
+    </div>
+
+    <div>
+      <h1>Change Email</h1>
+        <form method="POST" action="/api/auth/changeEmail">
+          <div>
+            <label for="newEmail">New Email:</label>
+            <input type="text" id="newEmail" name="newEmail" required>
+          </div>
+          <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+          </div>
+          <button type="submit">Change Email</button>
+        </form> 
+    </div>
+    
+    <div>
+      <h1>Change Display Name</h1>
+        <form method="POST" action="/api/auth/changeDisplayName">
+          <div>
+            <label for="newDisplayName">New Display Name:</label>
+            <input type="text" id="newDisplayName" name="newDisplayName" required>
+          </div>
+          <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+          </div>
+          <button type="submit">Change Display Name</button>
+        </form> 
+    </div>
+
+    <div>
+      <h1>Change Name Color</h1>
+        <form method="POST" action="/api/auth/changeNameColor">
+          <div>
+            <label for="newColor">Enter a Hex Code:</label>
+            <input type="text" id="newColor" name="newColor" required>
+          </div>
+          <button type="submit">Change Name Color</button>
+        </form> 
+    </div>
+
+  </div>
+  <p><a href="/api/auth/logout">Logout</a></p>
+  <p><a href="/">← Back to Home</a></p>
+</body>
+</html>
