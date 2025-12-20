@@ -4,7 +4,7 @@ const router = express.Router();
 const path = require('path');
 const db = require('../modules/database');
 const { validatePassword, hashPassword, comparePassword } = require('../modules/password-utils');
-const validator = require('validator'); // This is only for validating emails, unless I forgot about the other uses
+const validator = require('validator'); // Used to validate emails and hex codes
 const emailSender = require('../config/email');
 
 
