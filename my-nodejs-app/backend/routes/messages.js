@@ -7,12 +7,7 @@ const db = require('../modules/database');
  * POST /api/chat/message - Send a chat message
  * Requires authentication
  */
-router.post('/message', (req, res) => {
-  // Check if user is logged in
-  if (!req.session || !req.session.userId) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
+router.post('/message', requireAuth, (req, res) => {
   const { message } = req.body;
 
   // Validate message
@@ -52,7 +47,7 @@ router.post('/message', (req, res) => {
 /**
  * GET /api/chat/history - Get message history
  */
-router.get('/history', (req, res) => {
+router.get('/history', requireAuth, (req, res) => {
   if (!req.session || !req.session.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }

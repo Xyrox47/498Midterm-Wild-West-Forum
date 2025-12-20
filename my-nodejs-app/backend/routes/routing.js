@@ -1,6 +1,6 @@
 const path = require('path');
 const express = require('express');
-const db = require('./database')
+const db = require('../modules/database')
 const { requireAuth } = require('../modules/auth-middleware');
 
 module.exports = function createRouter() {
@@ -39,7 +39,5 @@ module.exports = function createRouter() {
         });
     });
 
-
-    
     return router;
 };
