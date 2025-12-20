@@ -222,7 +222,8 @@
             messageEl.className = 'message';
             
             const time = new Date(message.created_at).toLocaleTimeString();
-            
+            // const time = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}`;
+
             messageEl.innerHTML = `
                 <div class="message-author" style="color: ${message.user_color || '#000000'}">
                     ${escapeHtml(message.display_name)}

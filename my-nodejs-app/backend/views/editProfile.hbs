@@ -34,6 +34,7 @@
           <button type="submit">Change Password</button>
         </form> 
     </div>
+    <p>{{errorPC}}</p>
 
     <div>
       <h1>Change Email</h1>
@@ -49,7 +50,8 @@
           <button type="submit">Change Email</button>
         </form> 
     </div>
-    
+    <p>{{errorEC}}</p>
+
     <div>
       <h1>Change Display Name</h1>
         <form method="POST" action="/api/auth/changeDisplayName">
@@ -64,6 +66,8 @@
           <button type="submit">Change Display Name</button>
         </form> 
     </div>
+    <p>{{errorDNC}}</p>
+
 
     <div>
       <h1>Change Name Color</h1>
@@ -75,6 +79,7 @@
           <button type="submit">Change Name Color</button>
         </form> 
     </div>
+    <p>{{errorNCC}}</p>
 
   </div>
   <p><a href="/api/auth/logout">Logout</a></p>
